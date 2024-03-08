@@ -23,7 +23,7 @@ enum ActionType {
 model Stock {
   id Int @id() @default(autoincrement())
   productId Int @unique
-  available Int 
+  available Int? @default(0)
   histories StockHistory[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -33,9 +33,9 @@ model StockHistory {
   id Int @id() @default(autoincrement())
   stockId Int
   stock Stock @relation(fields: [stockId], references: [id], onDelete: Cascade)
-  prevAvaliable Int
-  quantity Int
-  avaliable Int
+  prevAvaliable Int? @default(0)
+  quantity Int? @default(0)
+  avaliable Int? @default(0)
   type ActionType
   createdAt DateTime  @default(now())
 }

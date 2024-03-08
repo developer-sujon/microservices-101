@@ -78,16 +78,17 @@ export const updateInventoryById = async (
   }
 
   // calculate the new available
-  let newQuantity = inventory.available;
+  let newQuantity = inventory.available || 0;
+
   if (updateInventorySchemaType.type === ActionType.IN) {
     newQuantity += updateInventorySchemaType.quantity;
   } else if (updateInventorySchemaType.type === ActionType.OUT) {
-    if (newQuantity <= updateInventorySchemaType.quantity) {
+    if (newQuantity < updateInventorySchemaType.quantity) {
       throw new Error("Stock not available");
     }
+
     newQuantity -= updateInventorySchemaType.quantity;
   }
-  console.log(updateInventorySchemaType);
 
   const updateInventory = await prisma.stock.update({
     where: { id },
@@ -108,7 +109,5 @@ export const updateInventoryById = async (
     },
   });
 
-  console.log(updateInventory);
-
-  return inventory;
+  return updateInventory;
 };
