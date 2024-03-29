@@ -1,16 +1,20 @@
+# docker-compose.yaml
+# postgres
+# pgadmin
+
 version: "3.8"
 
 services:
   postgres:
     image: postgres:13
-    container_name: postgres_container
+    container_name: postgres
     restart: on-failure
     environment:
-      POSTGRES_USER: postgres_user
-      POSTGRES_PASSWORD: postgres_password
-      POSTGRES_DB: postgres_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres:/var/lib/postgresql/data
     healthcheck:
@@ -21,7 +25,7 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4
-    container_name: pgadmin_container
+    container_name: pgadmin
     restart: on-failure
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@example.com
@@ -32,12 +36,38 @@ services:
 
   mailhog:
     image: mailhog/mailhog
+    container_name: mailhog2
     ports:
-      - 1025:1025 # SMTP port
-      - 8025:8025 # HTTP port
+      - "1025:1025"
+      - "8025:8025"
     volumes:
-      - mailhog_data:/var/lib/mailhog
+      - mailhog:/var/lib/mailhog
+
+  redis-stack:
+    image: redis/redis-stack:latest
+    ports:
+      - "6379:6379"
+      - "8002:8001"
+    volumes:
+      - redis-stack:/var/lib/redis-stack
+    environment:
+      - REDIS_ARGS=--save 900 1
+
+  rabbitmq:
+    image: rabbitmq:3.8-management
+    ports:
+      - "5672:5672" # RabbitMQ main port
+      - "15672:15672" # RabbitMQ management UI port
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  # ------------------------------------------
 
 volumes:
   postgres:
-  mailhog_data:
+  mailhog:
+  redis-stack:
+  rabbitmq_data:
+  kong_data:
+
+
