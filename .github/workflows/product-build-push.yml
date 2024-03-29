@@ -1,0 +1,33 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    paths:
+      - 'services/product/**'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Get commit hash
+        id: commit_hash
+        run: echo "::set-output name=hash::$(git rev-parse --short HEAD)"
+      
+      - name: Login to Docker Hub
+        run: echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+
+      - name: Build and push Product service Docker image
+        run: |
+          cd services/product
+          docker build \
+            --build-arg PRODUCT_DATABASE_URL="${{ secrets.PRODUCT_DATABASE_URL }}" \
+            --build-arg INVENTORY_SERVICE_URL="${{ secrets.INVENTORY_SERVICE_URL }}" \
+            -t $DOCKER_USERNAME/product:${{ steps.commit_hash.outputs.hash }} \
+            .
+          docker push $DOCKER_USERNAME/product:${{ steps.commit_hash.outputs.hash }}

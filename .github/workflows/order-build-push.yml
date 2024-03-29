@@ -1,0 +1,36 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    paths:
+      - 'services/order/**'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Get commit hash
+        id: commit_hash
+        run: echo "::set-output name=hash::$(git rev-parse --short HEAD)"
+      
+      - name: Login to Docker Hub
+        run: echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+
+      - name: Build and push Order service Docker image
+        run: |
+          cd services/order
+          docker build \
+            --build-arg ORDER_DATABASE_URL="${{ secrets.ORDER_DATABASE_URL }}" \
+            --build-arg CART_SERVICE_URL="${{ secrets.CART_SERVICE_URL }}" \
+            --build-arg EMAIL_SERVICE_URL="${{ secrets.EMAIL_SERVICE_URL }}" \
+            --build-arg PRODUCT_SERVICE_URL="${{ secrets.PRODUCT_SERVICE_URL }}" \
+            --build-arg RABBITMQ_URL="${{ secrets.RABBITMQ_URL }}" \
+            -t $DOCKER_USERNAME/order:${{ steps.commit_hash.outputs.hash }} \
+            .
+          docker push $DOCKER_USERNAME/order:${{ steps.commit_hash.outputs.hash }}

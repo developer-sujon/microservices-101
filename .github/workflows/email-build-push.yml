@@ -1,0 +1,38 @@
+name: Build and Push Docker Image - Email Service
+on:
+  push:
+    paths:
+      - 'services/email/**'
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Get commit hash
+        id: commit_hash
+        run: echo "::set-output name=hash::$(git rev-parse --short HEAD)"
+      
+      - name: Login to Docker Hub
+        run: echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+
+      - name: Build and push Email service Docker image
+        run: |
+          cd services/email
+          docker build \
+            --build-arg MAIL_DATABASE_URL=$MAIL_DATABASE_URL \
+            --build-arg SMTP_HOST=$SMTP_HOST \
+            --build-arg SMTP_PORT=$SMTP_PORT \
+            --build-arg GOOGLE_SMTP_USER=$GOOGLE_SMTP_USER \
+            --build-arg GOOGLE_SMTP_PASSWORD=$GOOGLE_SMTP_PASSWORD \
+            --build-arg DEFAULT_SENDER_EMAIL=$DEFAULT_SENDER_EMAIL \
+            --build-arg RABBITMQ_URL=$RABBITMQ_URL \
+            -t $DOCKER_USERNAME/email:${{ steps.commit_hash.outputs.hash }} \
+            .
+          docker push $DOCKER_USERNAME/email:${{ steps.commit_hash.outputs.hash }}
